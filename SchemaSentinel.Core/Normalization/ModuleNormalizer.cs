@@ -17,6 +17,10 @@ public class ModuleNormalizer
         @"[ \t]+$",
         RegexOptions.Multiline | RegexOptions.Compiled);
 
+    private static readonly Regex InlineMultiSpace = new(
+        @"[ \t]{2,}",
+        RegexOptions.Compiled);
+
     public string Normalize(string definition, ComparisonOptions options)
     {
         if (string.IsNullOrWhiteSpace(definition))
@@ -28,7 +32,10 @@ public class ModuleNormalizer
             result = SetStatementsPattern.Replace(result, string.Empty);
 
         if (options.IgnoreWhitespace)
+        {
             result = TrailingWhitespace.Replace(result, string.Empty);
+            result = InlineMultiSpace.Replace(result, " ");
+        }
 
         result = MultipleBlankLines.Replace(result, "\n\n");
         result = result.Trim();

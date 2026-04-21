@@ -16,6 +16,8 @@ public class MainViewModel : ViewModelBase
     private bool _isBusy;
     private ObjectResultViewModel? _selectedResult;
     private string _filterText = string.Empty;
+    private bool _hideMissingInSource;
+    private bool _hideTargetOnlyColumns;
 
     private static readonly ConnectionProfileStore _profileStore = new();
 
@@ -39,6 +41,18 @@ public class MainViewModel : ViewModelBase
         get => _filterText;
         set { SetField(ref _filterText, value); ApplyFilter(); }
     }
+    public bool HideMissingInSource
+    {
+        get => _hideMissingInSource;
+        set { SetField(ref _hideMissingInSource, value); ApplyFilter(); }
+    }
+    public bool HideTargetOnlyColumns
+    {
+        get => _hideTargetOnlyColumns;
+        set { SetField(ref _hideTargetOnlyColumns, value); ApplyFilter(); }
+    }
+
+    public Action<ObjectResultViewModel>? ScrollRequested { get; set; }
 
     private int _totalCount, _identicalCount, _changedCount, _missingSourceCount, _missingTargetCount;
     public int TotalCount { get => _totalCount; set => SetField(ref _totalCount, value); }
@@ -51,7 +65,12 @@ public class MainViewModel : ViewModelBase
     public RelayCommand ExportHtmlCommand { get; }
     public RelayCommand ExportMarkdownCommand { get; }
     public RelayCommand ExportJsonCommand { get; }
+    public RelayCommand ExportSqlCommand { get; }
     public RelayCommand CancelCommand { get; }
+    public RelayCommand ScrollToChangedCommand { get; }
+    public RelayCommand ScrollToMissingSourceCommand { get; }
+    public RelayCommand ScrollToMissingTargetCommand { get; }
+    public RelayCommand ScrollToIdenticalCommand { get; }
 
     private CancellationTokenSource? _cts;
 
@@ -61,7 +80,12 @@ public class MainViewModel : ViewModelBase
         ExportHtmlCommand = new RelayCommand(() => ExportAsync(new HtmlReporter()), () => Results.Any());
         ExportMarkdownCommand = new RelayCommand(() => ExportAsync(new MarkdownReporter()), () => Results.Any());
         ExportJsonCommand = new RelayCommand(() => ExportAsync(new JsonReporter()), () => Results.Any());
+        ExportSqlCommand = new RelayCommand(() => ExportAsync(new SqlScriptReporter()), () => Results.Any());
         CancelCommand = new RelayCommand(() => _cts?.Cancel(), () => IsBusy);
+        ScrollToChangedCommand = new RelayCommand(() => ScrollToFirstOf(DiffStatus.Changed));
+        ScrollToMissingSourceCommand = new RelayCommand(() => ScrollToFirstOf(DiffStatus.MissingInSource));
+        ScrollToMissingTargetCommand = new RelayCommand(() => ScrollToFirstOf(DiffStatus.MissingInTarget));
+        ScrollToIdenticalCommand = new RelayCommand(() => ScrollToFirstOf(DiffStatus.Identical));
     }
 
     private async Task RunComparisonAsync(CancellationToken cancellationToken)
@@ -145,23 +169,65 @@ public class MainViewModel : ViewModelBase
         if (_lastSummary == null) return;
 
         Results.Clear();
-        var query = _lastSummary.Results
-            .OrderBy(r => r.Status)
-            .ThenBy(r => r.ObjectType)
-            .ThenBy(r => r.FullName);
+        var vms = new List<ObjectResultViewModel>();
 
-        if (!string.IsNullOrWhiteSpace(FilterText))
+        foreach (var r in _lastSummary.Results.OrderBy(r => r.Status).ThenBy(r => r.ObjectType).ThenBy(r => r.FullName))
         {
-            var f = FilterText.Trim();
-            query = query.Where(r =>
-                r.FullName.Contains(f, StringComparison.OrdinalIgnoreCase) ||
-                r.ObjectType.Contains(f, StringComparison.OrdinalIgnoreCase) ||
-                r.Status.ToString().Contains(f, StringComparison.OrdinalIgnoreCase))
-                .OrderBy(r => r.Status).ThenBy(r => r.ObjectType).ThenBy(r => r.FullName);
+            if (_hideMissingInSource && r.Status == DiffStatus.MissingInSource)
+                continue;
+
+            ObjectComparisonResult effective = r;
+            if (_hideTargetOnlyColumns && r.ObjectType == "Table" && r.Status == DiffStatus.Changed)
+            {
+                var filteredDiffs = r.DetailedDifferences
+                    .Where(d => !d.StartsWith(SchemaComparer.TargetOnlyColumnMarker))
+                    .ToList();
+                if (filteredDiffs.Count == r.DetailedDifferences.Count)
+                    effective = r;
+                else
+                {
+                    effective = new ObjectComparisonResult
+                    {
+                        ObjectType = r.ObjectType, SchemaName = r.SchemaName, ObjectName = r.ObjectName,
+                        Status = filteredDiffs.Any() ? DiffStatus.Changed : DiffStatus.Identical,
+                        SummaryMessage = filteredDiffs.Any() ? $"{filteredDiffs.Count} difference(s) found." : "Identical.",
+                        DetailedDifferences = filteredDiffs,
+                        SourceNormalizedDefinition = r.SourceNormalizedDefinition,
+                        TargetNormalizedDefinition = r.TargetNormalizedDefinition,
+                        AlterScript = r.AlterScript
+                    };
+                    if (effective.Status == DiffStatus.Identical) continue;
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(FilterText))
+            {
+                var f = FilterText.Trim();
+                if (!effective.FullName.Contains(f, StringComparison.OrdinalIgnoreCase) &&
+                    !effective.ObjectType.Contains(f, StringComparison.OrdinalIgnoreCase) &&
+                    !effective.Status.ToString().Contains(f, StringComparison.OrdinalIgnoreCase))
+                    continue;
+            }
+
+            vms.Add(new ObjectResultViewModel(effective));
         }
 
-        foreach (var r in query)
-            Results.Add(new ObjectResultViewModel(r));
+        foreach (var vm in vms)
+            Results.Add(vm);
+
+        TotalCount = vms.Count;
+        IdenticalCount = vms.Count(v => v.Status == DiffStatus.Identical);
+        ChangedCount = vms.Count(v => v.Status == DiffStatus.Changed);
+        MissingSourceCount = vms.Count(v => v.Status == DiffStatus.MissingInSource);
+        MissingTargetCount = vms.Count(v => v.Status == DiffStatus.MissingInTarget);
+    }
+
+    private void ScrollToFirstOf(DiffStatus status)
+    {
+        var item = Results.FirstOrDefault(r => r.Status == status);
+        if (item == null) return;
+        SelectedResult = item;
+        ScrollRequested?.Invoke(item);
     }
 
     private async void ExportAsync(IReportExporter exporter)

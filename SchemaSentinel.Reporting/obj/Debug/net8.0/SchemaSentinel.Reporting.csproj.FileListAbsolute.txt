@@ -13,3 +13,4 @@ C:\DEV\SchemaSentinel\SchemaSentinel.Reporting\obj\Debug\net8.0\SchemaSentinel.R
 C:\DEV\SchemaSentinel\SchemaSentinel.Reporting\obj\Debug\net8.0\refint\SchemaSentinel.Reporting.dll
 C:\DEV\SchemaSentinel\SchemaSentinel.Reporting\obj\Debug\net8.0\SchemaSentinel.Reporting.pdb
 C:\DEV\SchemaSentinel\SchemaSentinel.Reporting\obj\Debug\net8.0\ref\SchemaSentinel.Reporting.dll
+C:\DEV\SchemaSentinel\SchemaSentinel.Reporting\obj\Debug\net8.0\SchemaSentinel.Reporting.sourcelink.json

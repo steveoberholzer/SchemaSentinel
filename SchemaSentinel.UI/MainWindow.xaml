@@ -159,31 +159,46 @@
         <Border DockPanel.Dock="Top" Background="White" Padding="12,8"
                 BorderBrush="#DDD" BorderThickness="0,1">
             <StackPanel Orientation="Horizontal">
-                <Border Style="{StaticResource SummaryCard}">
+                <Border Style="{StaticResource SummaryCard}" Cursor="Hand">
+                    <Border.InputBindings>
+                        <MouseBinding MouseAction="LeftClick" Command="{Binding ScrollToIdenticalCommand}"/>
+                    </Border.InputBindings>
                     <StackPanel>
                         <TextBlock Text="{Binding TotalCount}" FontSize="22" FontWeight="Bold" Foreground="#1A3A5C" HorizontalAlignment="Center"/>
                         <TextBlock Text="Total" FontSize="10" Foreground="#888" HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Border>
-                <Border Style="{StaticResource SummaryCard}">
+                <Border Style="{StaticResource SummaryCard}" Cursor="Hand">
+                    <Border.InputBindings>
+                        <MouseBinding MouseAction="LeftClick" Command="{Binding ScrollToIdenticalCommand}"/>
+                    </Border.InputBindings>
                     <StackPanel>
                         <TextBlock Text="{Binding IdenticalCount}" FontSize="22" FontWeight="Bold" Foreground="#27AE60" HorizontalAlignment="Center"/>
                         <TextBlock Text="Identical" FontSize="10" Foreground="#888" HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Border>
-                <Border Style="{StaticResource SummaryCard}">
+                <Border Style="{StaticResource SummaryCard}" Cursor="Hand">
+                    <Border.InputBindings>
+                        <MouseBinding MouseAction="LeftClick" Command="{Binding ScrollToChangedCommand}"/>
+                    </Border.InputBindings>
                     <StackPanel>
                         <TextBlock Text="{Binding ChangedCount}" FontSize="22" FontWeight="Bold" Foreground="#E67E22" HorizontalAlignment="Center"/>
                         <TextBlock Text="Changed" FontSize="10" Foreground="#888" HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Border>
-                <Border Style="{StaticResource SummaryCard}">
+                <Border Style="{StaticResource SummaryCard}" Cursor="Hand">
+                    <Border.InputBindings>
+                        <MouseBinding MouseAction="LeftClick" Command="{Binding ScrollToMissingSourceCommand}"/>
+                    </Border.InputBindings>
                     <StackPanel>
                         <TextBlock Text="{Binding MissingSourceCount}" FontSize="22" FontWeight="Bold" Foreground="#E74C3C" HorizontalAlignment="Center"/>
                         <TextBlock Text="Missing in Source" FontSize="10" Foreground="#888" HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Border>
-                <Border Style="{StaticResource SummaryCard}">
+                <Border Style="{StaticResource SummaryCard}" Cursor="Hand">
+                    <Border.InputBindings>
+                        <MouseBinding MouseAction="LeftClick" Command="{Binding ScrollToMissingTargetCommand}"/>
+                    </Border.InputBindings>
                     <StackPanel>
                         <TextBlock Text="{Binding MissingTargetCount}" FontSize="22" FontWeight="Bold" Foreground="#C0392B" HorizontalAlignment="Center"/>
                         <TextBlock Text="Missing in Target" FontSize="10" Foreground="#888" HorizontalAlignment="Center"/>
@@ -192,10 +207,19 @@
 
                 <Rectangle Width="1" Fill="#DDD" Margin="12,4"/>
 
+                <StackPanel VerticalAlignment="Center" Margin="4,0">
+                    <CheckBox Content="Hide target-only objects" IsChecked="{Binding HideMissingInSource}"
+                              FontSize="11" Margin="0,0,0,3" Foreground="#555"/>
+                    <CheckBox Content="Hide target-only columns" IsChecked="{Binding HideTargetOnlyColumns}"
+                              FontSize="11" Foreground="#555"/>
+                </StackPanel>
+
+                <Rectangle Width="1" Fill="#DDD" Margin="12,4"/>
+
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="Filter:" FontSize="12" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="#555"/>
                     <TextBox Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
-                             Width="180" Padding="5,3" FontSize="12" BorderBrush="#CCC" VerticalAlignment="Center"/>
+                             Width="160" Padding="5,3" FontSize="12" BorderBrush="#CCC" VerticalAlignment="Center"/>
                 </StackPanel>
 
                 <Rectangle Width="1" Fill="#DDD" Margin="12,4"/>
@@ -204,6 +228,7 @@
                 <Button Content="HTML" Style="{StaticResource ActionButton}" Command="{Binding ExportHtmlCommand}" Background="#2980B9"/>
                 <Button Content="Markdown" Style="{StaticResource ActionButton}" Command="{Binding ExportMarkdownCommand}" Background="#8E44AD"/>
                 <Button Content="JSON" Style="{StaticResource ActionButton}" Command="{Binding ExportJsonCommand}" Background="#16A085"/>
+                <Button Content="SQL Script" Style="{StaticResource ActionButton}" Command="{Binding ExportSqlCommand}" Background="#6C3483"/>
             </StackPanel>
         </Border>
 
@@ -218,7 +243,8 @@
             <!-- Results DataGrid -->
             <Border Grid.Column="0" Background="White" CornerRadius="5"
                     BorderBrush="#DDD" BorderThickness="1" ClipToBounds="True">
-                <DataGrid ItemsSource="{Binding Results}"
+                <DataGrid x:Name="ResultsGrid"
+                          ItemsSource="{Binding Results}"
                           SelectedItem="{Binding SelectedResult, Mode=TwoWay}"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"

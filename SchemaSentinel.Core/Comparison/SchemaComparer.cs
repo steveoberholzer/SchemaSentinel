@@ -1,3 +1,4 @@
+using System.Text;
 using SchemaSentinel.Core.Models;
 using SchemaSentinel.Core.Normalization;
 
@@ -71,6 +72,7 @@ public class SchemaComparer
             var normSrc = _tableNormalizer.Normalize(src!, options);
             var normTgt = _tableNormalizer.Normalize(tgt!, options);
             var diffs = DiffTables(normSrc, normTgt);
+            var alterScript = BuildAlterScript(src!, tgt!);
 
             yield return new ObjectComparisonResult
             {
@@ -81,7 +83,8 @@ public class SchemaComparer
                 SummaryMessage = diffs.Any() ? $"{diffs.Count} difference(s) found." : "Identical.",
                 DetailedDifferences = diffs,
                 SourceNormalizedDefinition = _tableNormalizer.RenderDefinition(normSrc, options),
-                TargetNormalizedDefinition = _tableNormalizer.RenderDefinition(normTgt, options)
+                TargetNormalizedDefinition = _tableNormalizer.RenderDefinition(normTgt, options),
+                AlterScript = alterScript.Length > 0 ? alterScript : null
             };
         }
     }
@@ -129,6 +132,8 @@ public class SchemaComparer
         }
     }
 
+    public const string TargetOnlyColumnMarker = "[target-only] ";
+
     private static List<string> DiffTables(TableModel source, TableModel target)
     {
         var diffs = new List<string>();
@@ -138,7 +143,7 @@ public class SchemaComparer
         foreach (var col in srcCols.Keys.Except(tgtCols.Keys))
             diffs.Add($"Column '{srcCols[col].Name}' exists in source but not in target.");
         foreach (var col in tgtCols.Keys.Except(srcCols.Keys))
-            diffs.Add($"Column '{tgtCols[col].Name}' exists in target but not in source.");
+            diffs.Add($"{TargetOnlyColumnMarker}Column '{tgtCols[col].Name}' exists in target but not in source.");
 
         foreach (var col in srcCols.Keys.Intersect(tgtCols.Keys))
         {
@@ -173,6 +178,21 @@ public class SchemaComparer
         }
 
         return diffs;
+    }
+
+    private static string BuildAlterScript(TableModel source, TableModel target)
+    {
+        var tgtCols = new HashSet<string>(target.Columns.Select(c => c.Name), StringComparer.OrdinalIgnoreCase);
+        var sb = new StringBuilder();
+        foreach (var col in source.Columns.Where(c => !tgtCols.Contains(c.Name)))
+        {
+            var typePart = TableNormalizer.FormatDataType(col);
+            var identity = col.IsIdentity ? $" IDENTITY({col.IdentitySeed ?? 1},{col.IdentityIncrement ?? 1})" : string.Empty;
+            var defaultPart = col.DefaultDefinition != null ? $" DEFAULT {col.DefaultDefinition}" : string.Empty;
+            var nullable = col.IsNullable ? "NULL" : "NOT NULL";
+            sb.AppendLine($"ALTER TABLE [{source.SchemaName}].[{source.TableName}] ADD [{col.Name}] {typePart}{identity} {nullable}{defaultPart};");
+        }
+        return sb.ToString();
     }
 
     private static ObjectComparisonResult Missing(string type, string schema, string name, DiffStatus status) =>

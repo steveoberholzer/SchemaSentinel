@@ -10,6 +10,7 @@ public class ObjectComparisonResult
     public List<string> DetailedDifferences { get; set; } = new();
     public string? SourceNormalizedDefinition { get; set; }
     public string? TargetNormalizedDefinition { get; set; }
+    public string? AlterScript { get; set; }
 
     public string FullName => $"{SchemaName}.{ObjectName}";
 }

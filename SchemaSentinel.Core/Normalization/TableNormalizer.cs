@@ -54,7 +54,7 @@ public class TableNormalizer
         return sb.ToString();
     }
 
-    private static string FormatDataType(ColumnModel col) =>
+    public static string FormatDataType(ColumnModel col) =>
         col.DataType.ToLowerInvariant() switch
         {
             "varchar" or "nvarchar" or "char" or "nchar" or "varbinary" or "binary" =>

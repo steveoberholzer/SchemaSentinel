@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SchemaSentinel.Reporting")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2a618e771e35ac394b653ee0f948459ab797150e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+00db78e35d00f4f69542eb4bf73b33f6aadeecbe")]
 [assembly: System.Reflection.AssemblyProductAttribute("SchemaSentinel.Reporting")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SchemaSentinel.Reporting")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

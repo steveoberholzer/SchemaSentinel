@@ -9,3 +9,4 @@ C:\DEV\SchemaSentinel\SchemaSentinel.Core\obj\Debug\net8.0\SchemaSentinel.Core.d
 C:\DEV\SchemaSentinel\SchemaSentinel.Core\obj\Debug\net8.0\refint\SchemaSentinel.Core.dll
 C:\DEV\SchemaSentinel\SchemaSentinel.Core\obj\Debug\net8.0\SchemaSentinel.Core.pdb
 C:\DEV\SchemaSentinel\SchemaSentinel.Core\obj\Debug\net8.0\ref\SchemaSentinel.Core.dll
+C:\DEV\SchemaSentinel\SchemaSentinel.Core\obj\Debug\net8.0\SchemaSentinel.Core.sourcelink.json
