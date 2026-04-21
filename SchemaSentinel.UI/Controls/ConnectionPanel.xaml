@@ -4,6 +4,7 @@
              xmlns:conv="clr-namespace:SchemaSentinel.UI.Converters">
     <UserControl.Resources>
         <conv:BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <conv:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
         <conv:ConnectionStatusToColorConverter x:Key="ConnStatusColor"/>
         <Style x:Key="FieldLabel" TargetType="TextBlock">
             <Setter Property="FontSize" Value="11"/>
@@ -15,18 +16,47 @@
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="BorderBrush" Value="#CCC"/>
         </Style>
+        <Style x:Key="HeaderButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="4,0"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="#555"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
     </UserControl.Resources>
 
-    <GroupBox Padding="8">
+    <GroupBox>
         <GroupBox.Header>
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="{Binding Label}" FontWeight="SemiBold" FontSize="13"/>
-                <Ellipse Width="10" Height="10" Margin="8,0,0,0"
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="{Binding Label}" FontWeight="SemiBold" FontSize="13" VerticalAlignment="Center"/>
+                <Ellipse Width="10" Height="10" Margin="8,0,4,0" VerticalAlignment="Center"
                          Fill="{Binding IsConnected, Converter={StaticResource ConnStatusColor}}"/>
+                <!-- Summary shown only when collapsed -->
+                <TextBlock Text="{Binding ConnectionSummary}" FontSize="11" Foreground="#777"
+                           VerticalAlignment="Center" Margin="2,0,0,0"
+                           Visibility="{Binding IsExpanded, Converter={StaticResource InvBoolToVis}}"/>
+                <Button Style="{StaticResource HeaderButton}" Command="{Binding ToggleExpandCommand}" Margin="6,0,0,0">
+                    <Button.Content>
+                        <TextBlock VerticalAlignment="Center">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Text" Value="▲"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsExpanded}" Value="False">
+                                            <Setter Property="Text" Value="▼"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Button.Content>
+                </Button>
             </StackPanel>
         </GroupBox.Header>
 
-        <Grid>
+        <Grid Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVis}}" Margin="8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
@@ -45,25 +75,35 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
+            <!-- Saved profiles -->
+            <DockPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,6" LastChildFill="True">
+                <Button DockPanel.Dock="Right" Content="Save" Command="{Binding SaveProfileCommand}"
+                        Padding="8,3" FontSize="11" Margin="4,0,0,0"
+                        Background="#1A3A5C" Foreground="White" BorderThickness="0" Cursor="Hand"/>
+                <ComboBox ItemsSource="{Binding SavedProfiles}"
+                          SelectedItem="{Binding SelectedSavedProfile}"
+                          DisplayMemberPath="DisplayName"
+                          FontSize="12" Padding="4,2"/>
+            </DockPanel>
+
             <!-- Server -->
-            <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="Server"/>
-            <TextBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource FieldBox}"
+            <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="Server"/>
+            <TextBox Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource FieldBox}"
                      Text="{Binding ServerName, UpdateSourceTrigger=PropertyChanged}"
-                     Margin="0,0,0,0"
                      ToolTip="On-prem: MyServer\Instance&#x0a;Azure SQL DB: myserver.database.windows.net&#x0a;Azure SQL MI (public endpoint): myinstance.public.&lt;dns-zone&gt;.database.windows.net,3342"/>
-            <TextBlock Grid.Row="0" Grid.Column="1" FontSize="10" Foreground="#999"
+            <TextBlock Grid.Row="1" Grid.Column="1" FontSize="10" Foreground="#999"
                        HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,0,2"
                        Text="Azure MI: add .public. and ,3342"
                        ToolTip="Azure SQL Managed Instance public endpoint format:&#x0a;myinstance.public.&lt;dns-zone&gt;.database.windows.net,3342&#x0a;&#x0a;Windows auth only works inside the VNet.&#x0a;Use SQL Server auth for public endpoint access."/>
 
             <!-- Database -->
-            <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="Database"/>
-            <TextBox Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource FieldBox}"
+            <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="Database"/>
+            <TextBox Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource FieldBox}"
                      Text="{Binding DatabaseName, UpdateSourceTrigger=PropertyChanged}"/>
 
             <!-- Auth type -->
-            <TextBlock Grid.Row="4" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="Authentication"/>
-            <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,2,0,4">
+            <TextBlock Grid.Row="5" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="Authentication"/>
+            <StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,2,0,4">
                 <RadioButton Content="Windows" IsChecked="{Binding IsWindowsAuth}" Margin="0,0,12,0" FontSize="12"/>
                 <RadioButton Content="SQL Server" IsChecked="{Binding IsSqlAuthentication}" Margin="0,0,12,0" FontSize="12"/>
                 <RadioButton Content="Entra MFA" IsChecked="{Binding IsEntraMfaAuthentication}" FontSize="12"
@@ -71,12 +111,11 @@
             </StackPanel>
 
             <!-- Username field (SQL Auth + Entra MFA) -->
-            <StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2"
+            <StackPanel Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2"
                         Visibility="{Binding ShowUsernameField, Converter={StaticResource BoolToVis}}">
                 <TextBlock Style="{StaticResource FieldLabel}">
                     <Run Text="Username"/>
-                    <Run Text=" (login hint)" Foreground="#999"
-                         FontSize="10">
+                    <Run Text=" (login hint)" Foreground="#999" FontSize="10">
                         <Run.Style>
                             <Style TargetType="Run">
                                 <Setter Property="Foreground" Value="Transparent"/>
@@ -94,7 +133,7 @@
             </StackPanel>
 
             <!-- Password field (SQL Auth only) -->
-            <StackPanel Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2"
+            <StackPanel Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2"
                         Visibility="{Binding ShowPasswordField, Converter={StaticResource BoolToVis}}">
                 <TextBlock Style="{StaticResource FieldLabel}" Text="Password"/>
                 <PasswordBox x:Name="PasswordBox" Padding="4,3" FontSize="12" BorderBrush="#CCC" Margin="0,0,0,4"
@@ -102,24 +141,12 @@
             </StackPanel>
 
             <!-- Entra MFA note -->
-            <Border Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,2,0,4"
+            <Border Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,2,0,4"
                     Background="#EBF5FB" BorderBrush="#AED6F1" BorderThickness="1" CornerRadius="3" Padding="8,5"
                     Visibility="{Binding IsEntraMfa, Converter={StaticResource BoolToVis}}">
                 <TextBlock FontSize="11" Foreground="#1A5276" TextWrapping="Wrap"
                            Text="A browser window will open when you click Test Connection or Compare. Sign in with MFA and return here once complete."/>
             </Border>
-
-            <!-- Tenant ID field (Entra MFA only) -->
-            <StackPanel Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2"
-                        Visibility="{Binding ShowTenantField, Converter={StaticResource BoolToVis}}">
-                <TextBlock Style="{StaticResource FieldLabel}">
-                    <Run Text="Tenant ID"/>
-                    <Run Text=" (optional)" Foreground="#999" FontSize="10"/>
-                </TextBlock>
-                <TextBox Style="{StaticResource FieldBox}" Margin="0,0,0,4"
-                         Text="{Binding TenantId, UpdateSourceTrigger=PropertyChanged}"
-                         ToolTip="Your Azure AD tenant ID (GUID). Find it in Azure Portal → Azure Active Directory → Overview.&#x0a;Required if your login account is a guest in the tenant that owns this SQL server."/>
-            </StackPanel>
 
             <!-- Options row -->
             <StackPanel Grid.Row="9" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,4,0,2">

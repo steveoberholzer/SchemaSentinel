@@ -17,8 +17,10 @@ public class MainViewModel : ViewModelBase
     private ObjectResultViewModel? _selectedResult;
     private string _filterText = string.Empty;
 
-    public ConnectionViewModel Source { get; } = new() { Label = "Source" };
-    public ConnectionViewModel Target { get; } = new() { Label = "Target" };
+    private static readonly ConnectionProfileStore _profileStore = new();
+
+    public ConnectionViewModel Source { get; } = new(_profileStore) { Label = "Source" };
+    public ConnectionViewModel Target { get; } = new(_profileStore) { Label = "Target" };
     public ComparisonOptionsViewModel Options { get; } = new();
 
     public ObservableCollection<ObjectResultViewModel> Results { get; } = new();

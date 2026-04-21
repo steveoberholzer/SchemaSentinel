@@ -12,7 +12,6 @@ public class ConnectionProfile
     public AuthType AuthType { get; set; } = AuthType.WindowsAuth;
     public string? Username { get; set; }
     public string? Password { get; set; }
-    public string? TenantId { get; set; }
     public int ConnectionTimeout { get; set; } = 30;
     public bool TrustServerCertificate { get; set; } = false;
     public bool Encrypt { get; set; } = true;
