@@ -1,0 +1,190 @@
+using System.Collections.ObjectModel;
+using System.Windows;
+using Microsoft.Win32;
+using SchemaSentinel.Core.Comparison;
+using SchemaSentinel.Data;
+using SchemaSentinel.Reporting;
+
+namespace SchemaSentinel.UI.ViewModels;
+
+public class MainViewModel : ViewModelBase
+{
+    private readonly MetadataExtractor _extractor = new(new SqlConnectionService());
+    private readonly SchemaComparer _comparer = new();
+
+    private string _statusMessage = "Ready.";
+    private bool _isBusy;
+    private ObjectResultViewModel? _selectedResult;
+    private string _filterText = string.Empty;
+
+    public ConnectionViewModel Source { get; } = new() { Label = "Source" };
+    public ConnectionViewModel Target { get; } = new() { Label = "Target" };
+    public ComparisonOptionsViewModel Options { get; } = new();
+
+    public ObservableCollection<ObjectResultViewModel> Results { get; } = new();
+
+    public string StatusMessage { get => _statusMessage; set => SetField(ref _statusMessage, value); }
+    public bool IsBusy { get => _isBusy; set => SetField(ref _isBusy, value); }
+
+    public ObjectResultViewModel? SelectedResult
+    {
+        get => _selectedResult;
+        set => SetField(ref _selectedResult, value);
+    }
+
+    public string FilterText
+    {
+        get => _filterText;
+        set { SetField(ref _filterText, value); ApplyFilter(); }
+    }
+
+    private int _totalCount, _identicalCount, _changedCount, _missingSourceCount, _missingTargetCount;
+    public int TotalCount { get => _totalCount; set => SetField(ref _totalCount, value); }
+    public int IdenticalCount { get => _identicalCount; set => SetField(ref _identicalCount, value); }
+    public int ChangedCount { get => _changedCount; set => SetField(ref _changedCount, value); }
+    public int MissingSourceCount { get => _missingSourceCount; set => SetField(ref _missingSourceCount, value); }
+    public int MissingTargetCount { get => _missingTargetCount; set => SetField(ref _missingTargetCount, value); }
+
+    public AsyncRelayCommand CompareCommand { get; }
+    public RelayCommand ExportHtmlCommand { get; }
+    public RelayCommand ExportMarkdownCommand { get; }
+    public RelayCommand ExportJsonCommand { get; }
+    public RelayCommand CancelCommand { get; }
+
+    private CancellationTokenSource? _cts;
+
+    public MainViewModel()
+    {
+        CompareCommand = new AsyncRelayCommand(RunComparisonAsync, () => !IsBusy);
+        ExportHtmlCommand = new RelayCommand(() => ExportAsync(new HtmlReporter()), () => Results.Any());
+        ExportMarkdownCommand = new RelayCommand(() => ExportAsync(new MarkdownReporter()), () => Results.Any());
+        ExportJsonCommand = new RelayCommand(() => ExportAsync(new JsonReporter()), () => Results.Any());
+        CancelCommand = new RelayCommand(() => _cts?.Cancel(), () => IsBusy);
+    }
+
+    private async Task RunComparisonAsync(CancellationToken cancellationToken)
+    {
+        if (!Source.IsValid() || !Target.IsValid())
+        {
+            StatusMessage = "Please fill in both connection details before comparing.";
+            return;
+        }
+
+        _cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        IsBusy = true;
+        Results.Clear();
+        SelectedResult = null;
+        StatusMessage = "Extracting metadata from source...";
+
+        try
+        {
+            var options = Options.ToOptions();
+            var srcProfile = Source.ToProfile();
+            var tgtProfile = Target.ToProfile();
+
+            var sourceTables = options.CompareTables
+                ? await _extractor.ExtractTablesAsync(srcProfile, options, _cts.Token)
+                : Array.Empty<SchemaSentinel.Core.Models.TableModel>();
+
+            StatusMessage = "Extracting metadata from target...";
+            var targetTables = options.CompareTables
+                ? await _extractor.ExtractTablesAsync(tgtProfile, options, _cts.Token)
+                : Array.Empty<SchemaSentinel.Core.Models.TableModel>();
+
+            StatusMessage = "Extracting modules from source...";
+            var sourceModules = await _extractor.ExtractModulesAsync(srcProfile, options, _cts.Token);
+
+            StatusMessage = "Extracting modules from target...";
+            var targetModules = await _extractor.ExtractModulesAsync(tgtProfile, options, _cts.Token);
+
+            StatusMessage = "Comparing...";
+            var summary = await Task.Run(() =>
+            {
+                var result = _comparer.Compare(sourceTables, targetTables, sourceModules, targetModules, options);
+                result.SourceDescription = srcProfile.DisplayName;
+                result.TargetDescription = tgtProfile.DisplayName;
+                return result;
+            }, _cts.Token);
+
+            _lastSummary = summary;
+            PopulateResults(summary);
+            StatusMessage = $"Comparison complete. {summary.TotalScanned} objects scanned.";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Comparison cancelled.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private ComparisonSummary? _lastSummary;
+
+    private void PopulateResults(ComparisonSummary summary)
+    {
+        foreach (var r in summary.Results.OrderBy(r => r.Status).ThenBy(r => r.ObjectType).ThenBy(r => r.FullName))
+            Results.Add(new ObjectResultViewModel(r));
+
+        TotalCount = summary.TotalScanned;
+        IdenticalCount = summary.IdenticalCount;
+        ChangedCount = summary.ChangedCount;
+        MissingSourceCount = summary.MissingInSourceCount;
+        MissingTargetCount = summary.MissingInTargetCount;
+    }
+
+    private void ApplyFilter()
+    {
+        if (_lastSummary == null) return;
+
+        Results.Clear();
+        var query = _lastSummary.Results
+            .OrderBy(r => r.Status)
+            .ThenBy(r => r.ObjectType)
+            .ThenBy(r => r.FullName);
+
+        if (!string.IsNullOrWhiteSpace(FilterText))
+        {
+            var f = FilterText.Trim();
+            query = query.Where(r =>
+                r.FullName.Contains(f, StringComparison.OrdinalIgnoreCase) ||
+                r.ObjectType.Contains(f, StringComparison.OrdinalIgnoreCase) ||
+                r.Status.ToString().Contains(f, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(r => r.Status).ThenBy(r => r.ObjectType).ThenBy(r => r.FullName);
+        }
+
+        foreach (var r in query)
+            Results.Add(new ObjectResultViewModel(r));
+    }
+
+    private async void ExportAsync(IReportExporter exporter)
+    {
+        if (_lastSummary == null) return;
+
+        var dialog = new SaveFileDialog
+        {
+            Filter = $"{exporter.DisplayName}|*{exporter.FileExtension}",
+            FileName = $"SchemaSentinel-Report-{DateTime.Now:yyyyMMdd-HHmmss}{exporter.FileExtension}"
+        };
+
+        if (dialog.ShowDialog() != true) return;
+
+        try
+        {
+            StatusMessage = "Exporting...";
+            await exporter.ExportAsync(_lastSummary, dialog.FileName);
+            StatusMessage = $"Report exported: {dialog.FileName}";
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Export failed: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            StatusMessage = "Export failed.";
+        }
+    }
+}
+

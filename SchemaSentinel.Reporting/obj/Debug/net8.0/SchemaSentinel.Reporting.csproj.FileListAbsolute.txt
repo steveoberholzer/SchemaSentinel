@@ -1,0 +1,15 @@
+C:\DEV\SchemaSentinel\SchemaSentinel.Reporting\bin\Debug\net8.0\SchemaSentinel.Reporting.deps.json
+C:\DEV\SchemaSentinel\SchemaSentinel.Reporting\bin\Debug\net8.0\SchemaSentinel.Reporting.dll
+C:\DEV\SchemaSentinel\SchemaSentinel.Reporting\bin\Debug\net8.0\SchemaSentinel.Reporting.pdb
+C:\DEV\SchemaSentinel\SchemaSentinel.Reporting\bin\Debug\net8.0\SchemaSentinel.Core.dll
+C:\DEV\SchemaSentinel\SchemaSentinel.Reporting\bin\Debug\net8.0\SchemaSentinel.Core.pdb
+C:\DEV\SchemaSentinel\SchemaSentinel.Reporting\obj\Debug\net8.0\SchemaSentinel.Reporting.csproj.AssemblyReference.cache
+C:\DEV\SchemaSentinel\SchemaSentinel.Reporting\obj\Debug\net8.0\SchemaSentinel.Reporting.GeneratedMSBuildEditorConfig.editorconfig
+C:\DEV\SchemaSentinel\SchemaSentinel.Reporting\obj\Debug\net8.0\SchemaSentinel.Reporting.AssemblyInfoInputs.cache
+C:\DEV\SchemaSentinel\SchemaSentinel.Reporting\obj\Debug\net8.0\SchemaSentinel.Reporting.AssemblyInfo.cs
+C:\DEV\SchemaSentinel\SchemaSentinel.Reporting\obj\Debug\net8.0\SchemaSentinel.Reporting.csproj.CoreCompileInputs.cache
+C:\DEV\SchemaSentinel\SchemaSentinel.Reporting\obj\Debug\net8.0\SchemaSe.7E0E8D8E.Up2Date
+C:\DEV\SchemaSentinel\SchemaSentinel.Reporting\obj\Debug\net8.0\SchemaSentinel.Reporting.dll
+C:\DEV\SchemaSentinel\SchemaSentinel.Reporting\obj\Debug\net8.0\refint\SchemaSentinel.Reporting.dll
+C:\DEV\SchemaSentinel\SchemaSentinel.Reporting\obj\Debug\net8.0\SchemaSentinel.Reporting.pdb
+C:\DEV\SchemaSentinel\SchemaSentinel.Reporting\obj\Debug\net8.0\ref\SchemaSentinel.Reporting.dll

@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\SchemaSentinel.Core\SchemaSentinel.Core.csproj" />
+    <ProjectReference Include="..\SchemaSentinel.Data\SchemaSentinel.Data.csproj" />
+    <ProjectReference Include="..\SchemaSentinel.Reporting\SchemaSentinel.Reporting.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,15 @@
+C:\DEV\SchemaSentinel\SchemaSentinel.Data\bin\Debug\net8.0\SchemaSentinel.Data.deps.json
+C:\DEV\SchemaSentinel\SchemaSentinel.Data\bin\Debug\net8.0\SchemaSentinel.Data.dll
+C:\DEV\SchemaSentinel\SchemaSentinel.Data\bin\Debug\net8.0\SchemaSentinel.Data.pdb
+C:\DEV\SchemaSentinel\SchemaSentinel.Data\bin\Debug\net8.0\SchemaSentinel.Core.dll
+C:\DEV\SchemaSentinel\SchemaSentinel.Data\bin\Debug\net8.0\SchemaSentinel.Core.pdb
+C:\DEV\SchemaSentinel\SchemaSentinel.Data\obj\Debug\net8.0\SchemaSentinel.Data.csproj.AssemblyReference.cache
+C:\DEV\SchemaSentinel\SchemaSentinel.Data\obj\Debug\net8.0\SchemaSentinel.Data.GeneratedMSBuildEditorConfig.editorconfig
+C:\DEV\SchemaSentinel\SchemaSentinel.Data\obj\Debug\net8.0\SchemaSentinel.Data.AssemblyInfoInputs.cache
+C:\DEV\SchemaSentinel\SchemaSentinel.Data\obj\Debug\net8.0\SchemaSentinel.Data.AssemblyInfo.cs
+C:\DEV\SchemaSentinel\SchemaSentinel.Data\obj\Debug\net8.0\SchemaSentinel.Data.csproj.CoreCompileInputs.cache
+C:\DEV\SchemaSentinel\SchemaSentinel.Data\obj\Debug\net8.0\SchemaSe.261B0C7C.Up2Date
+C:\DEV\SchemaSentinel\SchemaSentinel.Data\obj\Debug\net8.0\SchemaSentinel.Data.dll
+C:\DEV\SchemaSentinel\SchemaSentinel.Data\obj\Debug\net8.0\refint\SchemaSentinel.Data.dll
+C:\DEV\SchemaSentinel\SchemaSentinel.Data\obj\Debug\net8.0\SchemaSentinel.Data.pdb
+C:\DEV\SchemaSentinel\SchemaSentinel.Data\obj\Debug\net8.0\ref\SchemaSentinel.Data.dll

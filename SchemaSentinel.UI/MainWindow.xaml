@@ -1,0 +1,354 @@
+<Window x:Class="SchemaSentinel.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:SchemaSentinel.UI.ViewModels"
+        xmlns:ctrl="clr-namespace:SchemaSentinel.UI.Controls"
+        xmlns:conv="clr-namespace:SchemaSentinel.UI.Converters"
+        Title="SchemaSentinel" Height="800" Width="1280" MinHeight="600" MinWidth="900"
+        WindowStartupLocation="CenterScreen"
+        Background="#F0F2F5">
+
+    <Window.DataContext>
+        <vm:MainViewModel/>
+    </Window.DataContext>
+
+    <Window.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <conv:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
+        <conv:NullToVisibilityConverter x:Key="NullToVis"/>
+        <conv:StatusToColorConverter x:Key="StatusColor"/>
+        <conv:StatusToBackgroundConverter x:Key="StatusBg"/>
+
+        <Style x:Key="SummaryCard" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="5"/>
+            <Setter Property="Padding" Value="16,10"/>
+            <Setter Property="Margin" Value="4,0"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect ShadowDepth="1" BlurRadius="4" Opacity="0.12" Color="Black"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ActionButton" TargetType="Button">
+            <Setter Property="Padding" Value="14,6"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Background" Value="#1A3A5C"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="4,0,0,0"/>
+            <Style.Triggers>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.5"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="DetailSectionHeader" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+            <Setter Property="Foreground" Value="#333"/>
+        </Style>
+    </Window.Resources>
+
+    <DockPanel>
+        <!-- Header -->
+        <Border DockPanel.Dock="Top" Background="#1A3A5C" Padding="20,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="SchemaSentinel" Foreground="White" FontSize="20" FontWeight="Bold"/>
+                    <TextBlock Text="SQL Server Schema Comparison Tool" Foreground="#B0C4DE" FontSize="11" Margin="0,2,0,0"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="▶  Compare"
+                            Style="{StaticResource ActionButton}"
+                            Background="#27AE60"
+                            Command="{Binding CompareCommand}"
+                            Visibility="{Binding IsBusy, Converter={StaticResource InvBoolToVis}}"/>
+                    <Button Content="■  Cancel"
+                            Style="{StaticResource ActionButton}"
+                            Background="#E74C3C"
+                            Command="{Binding CancelCommand}"
+                            Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Status Bar -->
+        <Border DockPanel.Dock="Bottom" Background="#2C3E50" Padding="14,5">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="{Binding StatusMessage}" Foreground="#ECF0F1" FontSize="11" VerticalAlignment="Center"/>
+                <ProgressBar Grid.Column="1" Width="120" Height="6"
+                             IsIndeterminate="True"
+                             Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"
+                             Foreground="#27AE60" Background="#4A6FA5"/>
+            </Grid>
+        </Border>
+
+        <!-- Top panels (connections + options) wrapped in a ScrollViewer so they don't crush the results area -->
+        <ScrollViewer DockPanel.Dock="Top" VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled" MaxHeight="360">
+            <StackPanel Margin="12,10,12,0">
+                <!-- Connection Panels -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <ctrl:ConnectionPanel Grid.Column="0" DataContext="{Binding Source}"/>
+                    <ctrl:ConnectionPanel Grid.Column="2" DataContext="{Binding Target}"/>
+                </Grid>
+
+                <!-- Options -->
+                <GroupBox Header="Comparison Options" Margin="0,8,0,0" Padding="10,6">
+                    <WrapPanel Orientation="Horizontal">
+                        <GroupBox Header="Object Types" Padding="8,4" Margin="0,0,10,4">
+                            <StackPanel Orientation="Horizontal">
+                                <CheckBox Content="Tables" IsChecked="{Binding Options.CompareTables}" Margin="0,0,10,0" FontSize="12"/>
+                                <CheckBox Content="Views" IsChecked="{Binding Options.CompareViews}" Margin="0,0,10,0" FontSize="12"/>
+                                <CheckBox Content="Procedures" IsChecked="{Binding Options.CompareProcedures}" Margin="0,0,10,0" FontSize="12"/>
+                                <CheckBox Content="Functions" IsChecked="{Binding Options.CompareFunctions}" FontSize="12"/>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="Mode" Padding="8,4" Margin="0,0,10,4">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton Content="Logical" IsChecked="{Binding Options.IsLogical}" Margin="0,0,10,0" FontSize="12"/>
+                                <RadioButton Content="Strict" IsChecked="{Binding Options.IsStrict}" FontSize="12"/>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="Logical Options" Padding="8,4" Margin="0,0,10,4"
+                                  IsEnabled="{Binding Options.IsLogical}">
+                            <WrapPanel Orientation="Horizontal">
+                                <CheckBox Content="Ignore column order" IsChecked="{Binding Options.IgnoreColumnOrder}" Margin="0,0,10,2" FontSize="12"/>
+                                <CheckBox Content="Sort columns A–Z" IsChecked="{Binding Options.SortColumnsAlphabetically}" Margin="0,0,10,2" FontSize="12"/>
+                                <CheckBox Content="Ignore whitespace" IsChecked="{Binding Options.IgnoreWhitespace}" Margin="0,0,10,2" FontSize="12"/>
+                                <CheckBox Content="Ignore casing" IsChecked="{Binding Options.IgnoreCasing}" Margin="0,0,10,2" FontSize="12"/>
+                                <CheckBox Content="Ignore SET statements" IsChecked="{Binding Options.IgnoreSetStatements}" Margin="0,0,0,2" FontSize="12"/>
+                            </WrapPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="Changed Since (best-effort)" Padding="8,4" Margin="0,0,0,4">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <CheckBox IsChecked="{Binding Options.UseChangedSince}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <DatePicker SelectedDate="{Binding Options.ChangedSince}"
+                                            IsEnabled="{Binding Options.UseChangedSince}"
+                                            FontSize="12" Width="130"/>
+                            </StackPanel>
+                        </GroupBox>
+                    </WrapPanel>
+                </GroupBox>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Summary + Filter + Export bar -->
+        <Border DockPanel.Dock="Top" Background="White" Padding="12,8"
+                BorderBrush="#DDD" BorderThickness="0,1">
+            <StackPanel Orientation="Horizontal">
+                <Border Style="{StaticResource SummaryCard}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding TotalCount}" FontSize="22" FontWeight="Bold" Foreground="#1A3A5C" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Total" FontSize="10" Foreground="#888" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource SummaryCard}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding IdenticalCount}" FontSize="22" FontWeight="Bold" Foreground="#27AE60" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Identical" FontSize="10" Foreground="#888" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource SummaryCard}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding ChangedCount}" FontSize="22" FontWeight="Bold" Foreground="#E67E22" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Changed" FontSize="10" Foreground="#888" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource SummaryCard}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding MissingSourceCount}" FontSize="22" FontWeight="Bold" Foreground="#E74C3C" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Missing in Source" FontSize="10" Foreground="#888" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource SummaryCard}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding MissingTargetCount}" FontSize="22" FontWeight="Bold" Foreground="#C0392B" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Missing in Target" FontSize="10" Foreground="#888" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <Rectangle Width="1" Fill="#DDD" Margin="12,4"/>
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Filter:" FontSize="12" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="#555"/>
+                    <TextBox Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
+                             Width="180" Padding="5,3" FontSize="12" BorderBrush="#CCC" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <Rectangle Width="1" Fill="#DDD" Margin="12,4"/>
+
+                <TextBlock Text="Export:" FontSize="12" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="#555"/>
+                <Button Content="HTML" Style="{StaticResource ActionButton}" Command="{Binding ExportHtmlCommand}" Background="#2980B9"/>
+                <Button Content="Markdown" Style="{StaticResource ActionButton}" Command="{Binding ExportMarkdownCommand}" Background="#8E44AD"/>
+                <Button Content="JSON" Style="{StaticResource ActionButton}" Command="{Binding ExportJsonCommand}" Background="#16A085"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Results area: list + detail -->
+        <Grid Margin="12,8,12,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3*"/>
+                <ColumnDefinition Width="5"/>
+                <ColumnDefinition Width="2*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Results DataGrid -->
+            <Border Grid.Column="0" Background="White" CornerRadius="5"
+                    BorderBrush="#DDD" BorderThickness="1" ClipToBounds="True">
+                <DataGrid ItemsSource="{Binding Results}"
+                          SelectedItem="{Binding SelectedResult, Mode=TwoWay}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          HeadersVisibility="Column"
+                          GridLinesVisibility="Horizontal"
+                          HorizontalGridLinesBrush="#EEE"
+                          SelectionMode="Single"
+                          FontSize="12"
+                          RowHeight="28"
+                          BorderThickness="0"
+                          Background="Transparent"
+                          CanUserResizeRows="False">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Type"   Binding="{Binding ObjectType}" Width="80"/>
+                        <DataGridTextColumn Header="Schema" Binding="{Binding SchemaName}" Width="100"/>
+                        <DataGridTextColumn Header="Object" Binding="{Binding ObjectName}" Width="*"/>
+                        <DataGridTemplateColumn Header="Status" Width="150">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Border Background="{Binding Status, Converter={StaticResource StatusBg}}"
+                                            CornerRadius="3" Padding="6,2"
+                                            HorizontalAlignment="Left" Margin="4,2">
+                                        <TextBlock Text="{Binding StatusText}"
+                                                   Foreground="{Binding Status, Converter={StaticResource StatusColor}}"
+                                                   FontWeight="SemiBold" FontSize="11"/>
+                                    </Border>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow">
+                            <Setter Property="Cursor" Value="Hand"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="#EBF5FB"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.RowStyle>
+                </DataGrid>
+            </Border>
+
+            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch"
+                          Background="#DDD" Cursor="SizeWE"/>
+
+            <!-- Detail panel -->
+            <Border Grid.Column="2" Background="White" CornerRadius="5"
+                    BorderBrush="#DDD" BorderThickness="1">
+                <Grid>
+                    <!-- Empty state -->
+                    <TextBlock Text="Select an object to view details"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               Foreground="#BBB" FontSize="13">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedResult}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <!-- Detail content (visible when something is selected) -->
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="14">
+                        <ScrollViewer.Style>
+                            <Style TargetType="ScrollViewer">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedResult}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ScrollViewer.Style>
+                        <StackPanel DataContext="{Binding SelectedResult}">
+                            <!-- Title -->
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                <TextBlock Text="{Binding ObjectType}" Foreground="#999" FontSize="11" VerticalAlignment="Bottom" Margin="0,0,6,0"/>
+                                <TextBlock Text="{Binding FullName}" FontSize="14" FontWeight="SemiBold" Foreground="#1A3A5C"/>
+                            </StackPanel>
+
+                            <!-- Status badge -->
+                            <Border Background="{Binding Status, Converter={StaticResource StatusBg}}"
+                                    CornerRadius="4" Padding="8,4" Margin="0,0,0,10" HorizontalAlignment="Left">
+                                <TextBlock Text="{Binding StatusText}"
+                                           Foreground="{Binding Status, Converter={StaticResource StatusColor}}"
+                                           FontWeight="SemiBold" FontSize="12"/>
+                            </Border>
+
+                            <!-- Differences -->
+                            <TextBlock Text="Differences" Style="{StaticResource DetailSectionHeader}"/>
+                            <Border Background="#FAFAFA" BorderBrush="#EEE" BorderThickness="1"
+                                    CornerRadius="3" Padding="8" Margin="0,0,0,12">
+                                <TextBox Text="{Binding DifferencesText, Mode=OneWay}"
+                                         IsReadOnly="True" BorderThickness="0" Background="Transparent"
+                                         FontSize="11" FontFamily="Consolas" TextWrapping="Wrap"
+                                         VerticalScrollBarVisibility="Auto" MaxHeight="120"/>
+                            </Border>
+
+                            <!-- Definitions (tables + modules with changed definitions) -->
+                            <StackPanel Visibility="{Binding HasDefinitions, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="Source Definition" Style="{StaticResource DetailSectionHeader}"/>
+                                <Border Background="#F4FBF6" BorderBrush="#A9DFBF" BorderThickness="1"
+                                        CornerRadius="3" Padding="8" Margin="0,0,0,10" MaxHeight="180">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                                        <TextBox Text="{Binding SourceDefinition, Mode=OneWay}"
+                                                 IsReadOnly="True" BorderThickness="0" Background="Transparent"
+                                                 FontSize="11" FontFamily="Consolas" TextWrapping="NoWrap"/>
+                                    </ScrollViewer>
+                                </Border>
+
+                                <TextBlock Text="Target Definition" Style="{StaticResource DetailSectionHeader}"/>
+                                <Border Background="#FEF9F9" BorderBrush="#F1948A" BorderThickness="1"
+                                        CornerRadius="3" Padding="8" MaxHeight="180">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                                        <TextBox Text="{Binding TargetDefinition, Mode=OneWay}"
+                                                 IsReadOnly="True" BorderThickness="0" Background="Transparent"
+                                                 FontSize="11" FontFamily="Consolas" TextWrapping="NoWrap"/>
+                                    </ScrollViewer>
+                                </Border>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
+    </DockPanel>
+</Window>

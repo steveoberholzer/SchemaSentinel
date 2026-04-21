@@ -1,0 +1,11 @@
+C:\DEV\SchemaSentinel\SchemaSentinel.Core\bin\Debug\net8.0\SchemaSentinel.Core.deps.json
+C:\DEV\SchemaSentinel\SchemaSentinel.Core\bin\Debug\net8.0\SchemaSentinel.Core.dll
+C:\DEV\SchemaSentinel\SchemaSentinel.Core\bin\Debug\net8.0\SchemaSentinel.Core.pdb
+C:\DEV\SchemaSentinel\SchemaSentinel.Core\obj\Debug\net8.0\SchemaSentinel.Core.GeneratedMSBuildEditorConfig.editorconfig
+C:\DEV\SchemaSentinel\SchemaSentinel.Core\obj\Debug\net8.0\SchemaSentinel.Core.AssemblyInfoInputs.cache
+C:\DEV\SchemaSentinel\SchemaSentinel.Core\obj\Debug\net8.0\SchemaSentinel.Core.AssemblyInfo.cs
+C:\DEV\SchemaSentinel\SchemaSentinel.Core\obj\Debug\net8.0\SchemaSentinel.Core.csproj.CoreCompileInputs.cache
+C:\DEV\SchemaSentinel\SchemaSentinel.Core\obj\Debug\net8.0\SchemaSentinel.Core.dll
+C:\DEV\SchemaSentinel\SchemaSentinel.Core\obj\Debug\net8.0\refint\SchemaSentinel.Core.dll
+C:\DEV\SchemaSentinel\SchemaSentinel.Core\obj\Debug\net8.0\SchemaSentinel.Core.pdb
+C:\DEV\SchemaSentinel\SchemaSentinel.Core\obj\Debug\net8.0\ref\SchemaSentinel.Core.dll
