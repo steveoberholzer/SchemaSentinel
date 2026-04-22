@@ -6,10 +6,6 @@ internal static class TableQueries
 {
     public static string GetTables(ComparisonOptions options)
     {
-        var changedSince = options.ChangedSince.HasValue
-            ? $"AND t.modify_date >= '{options.ChangedSince.Value:yyyy-MM-dd}'"
-            : string.Empty;
-
         var schemaFilter = BuildSchemaFilter(options.SchemaFilter, "s.name");
 
         return $@"
@@ -20,7 +16,6 @@ SELECT
 FROM sys.tables t
 INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
 WHERE t.is_ms_shipped = 0
-{changedSince}
 {schemaFilter}
 ORDER BY s.name, t.name";
     }

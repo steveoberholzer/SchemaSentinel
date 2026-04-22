@@ -60,12 +60,16 @@ public class SchemaComparer
 
             if (!hasSource)
             {
-                yield return Missing("Table", tgt!.SchemaName, tgt.TableName, DiffStatus.MissingInSource);
+                var normTgtOnly = _tableNormalizer.Normalize(tgt!, options);
+                yield return Missing("Table", tgt!.SchemaName, tgt.TableName, DiffStatus.MissingInSource,
+                    tgt.ModifyDate, targetDef: _tableNormalizer.RenderDefinition(normTgtOnly, options));
                 continue;
             }
             if (!hasTarget)
             {
-                yield return Missing("Table", src!.SchemaName, src.TableName, DiffStatus.MissingInTarget);
+                var normSrcOnly = _tableNormalizer.Normalize(src!, options);
+                yield return Missing("Table", src!.SchemaName, src.TableName, DiffStatus.MissingInTarget,
+                    src.ModifyDate, sourceDef: _tableNormalizer.RenderDefinition(normSrcOnly, options));
                 continue;
             }
 
@@ -84,7 +88,9 @@ public class SchemaComparer
                 DetailedDifferences = diffs,
                 SourceNormalizedDefinition = _tableNormalizer.RenderDefinition(normSrc, options),
                 TargetNormalizedDefinition = _tableNormalizer.RenderDefinition(normTgt, options),
-                AlterScript = alterScript.Length > 0 ? alterScript : null
+                AlterScript = alterScript.Length > 0 ? alterScript : null,
+                SourceModifyDate = src.ModifyDate,
+                TargetModifyDate = tgt!.ModifyDate,
             };
         }
     }
@@ -103,12 +109,14 @@ public class SchemaComparer
 
             if (!hasSource)
             {
-                yield return Missing(objectType, tgt!.SchemaName, tgt.ObjectName, DiffStatus.MissingInSource);
+                yield return Missing(objectType, tgt!.SchemaName, tgt.ObjectName, DiffStatus.MissingInSource,
+                    tgt.ModifyDate, targetDef: _moduleNormalizer.Normalize(tgt.Definition, options));
                 continue;
             }
             if (!hasTarget)
             {
-                yield return Missing(objectType, src!.SchemaName, src.ObjectName, DiffStatus.MissingInTarget);
+                yield return Missing(objectType, src!.SchemaName, src.ObjectName, DiffStatus.MissingInTarget,
+                    src.ModifyDate, sourceDef: _moduleNormalizer.Normalize(src.Definition, options));
                 continue;
             }
 
@@ -127,7 +135,9 @@ public class SchemaComparer
                 Status = isDifferent ? DiffStatus.Changed : DiffStatus.Identical,
                 SummaryMessage = isDifferent ? "Definition differs between source and target." : "Identical.",
                 SourceNormalizedDefinition = normSrcDef,
-                TargetNormalizedDefinition = normTgtDef
+                TargetNormalizedDefinition = normTgtDef,
+                SourceModifyDate = src.ModifyDate,
+                TargetModifyDate = tgt.ModifyDate,
             };
         }
     }
@@ -195,7 +205,9 @@ public class SchemaComparer
         return sb.ToString();
     }
 
-    private static ObjectComparisonResult Missing(string type, string schema, string name, DiffStatus status) =>
+    private static ObjectComparisonResult Missing(
+        string type, string schema, string name, DiffStatus status,
+        DateTime? modifyDate = null, string? sourceDef = null, string? targetDef = null) =>
         new()
         {
             ObjectType = type,
@@ -204,6 +216,10 @@ public class SchemaComparer
             Status = status,
             SummaryMessage = status == DiffStatus.MissingInSource
                 ? $"{type} exists in target but not in source."
-                : $"{type} exists in source but not in target."
+                : $"{type} exists in source but not in target.",
+            SourceNormalizedDefinition = sourceDef,
+            TargetNormalizedDefinition = targetDef,
+            SourceModifyDate = status == DiffStatus.MissingInTarget ? modifyDate : null,
+            TargetModifyDate = status == DiffStatus.MissingInSource ? modifyDate : null,
         };
 }

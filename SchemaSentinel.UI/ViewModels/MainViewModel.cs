@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Windows;
 using SchemaSentinel.Core.Comparison;
+using SchemaSentinel.Core.Models;
 using SchemaSentinel.Data;
 using SchemaSentinel.Reporting;
 using SchemaSentinel.UI.Windows;
@@ -133,7 +134,8 @@ public class MainViewModel : ViewModelBase
             }, _cts.Token);
 
             _lastSummary = summary;
-            PopulateResults(summary);
+            _lastOptions = options;
+            ApplyFilter();
             StatusMessage = $"Comparison complete. {summary.TotalScanned} objects scanned.";
         }
         catch (OperationCanceledException)
@@ -151,18 +153,7 @@ public class MainViewModel : ViewModelBase
     }
 
     private ComparisonSummary? _lastSummary;
-
-    private void PopulateResults(ComparisonSummary summary)
-    {
-        foreach (var r in summary.Results.OrderBy(r => r.Status).ThenBy(r => r.ObjectType).ThenBy(r => r.FullName))
-            Results.Add(new ObjectResultViewModel(r));
-
-        TotalCount = summary.TotalScanned;
-        IdenticalCount = summary.IdenticalCount;
-        ChangedCount = summary.ChangedCount;
-        MissingSourceCount = summary.MissingInSourceCount;
-        MissingTargetCount = summary.MissingInTargetCount;
-    }
+    private ComparisonOptions? _lastOptions;
 
     private void ApplyFilter()
     {
@@ -175,6 +166,18 @@ public class MainViewModel : ViewModelBase
         {
             if (_hideMissingInSource && r.Status == DiffStatus.MissingInSource)
                 continue;
+
+            if (_lastOptions?.ChangedSince.HasValue == true)
+            {
+                var cutoff = _lastOptions.ChangedSince.Value;
+                bool recentEnough = r.Status switch
+                {
+                    DiffStatus.MissingInTarget => r.SourceModifyDate >= cutoff,
+                    DiffStatus.MissingInSource => r.TargetModifyDate >= cutoff,
+                    _ => r.SourceModifyDate >= cutoff || r.TargetModifyDate >= cutoff
+                };
+                if (!recentEnough) continue;
+            }
 
             ObjectComparisonResult effective = r;
             if (_hideTargetOnlyColumns && r.ObjectType == "Table" && r.Status == DiffStatus.Changed)

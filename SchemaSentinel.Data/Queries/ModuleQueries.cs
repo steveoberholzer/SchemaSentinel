@@ -14,10 +14,6 @@ internal static class ModuleQueries
             _                    => "AND o.type IN ('V','P','FN','IF','TF')"
         };
 
-        var changedSince = options.ChangedSince.HasValue
-            ? $"AND o.modify_date >= '{options.ChangedSince.Value:yyyy-MM-dd}'"
-            : string.Empty;
-
         var schemaFilter = BuildSchemaFilter(options.SchemaFilter, "s.name");
 
         return $@"
@@ -32,7 +28,6 @@ INNER JOIN sys.schemas    s ON o.schema_id  = s.schema_id
 INNER JOIN sys.sql_modules m ON o.object_id = m.object_id
 WHERE o.is_ms_shipped = 0
 {typeFilter}
-{changedSince}
 {schemaFilter}
 ORDER BY s.name, o.name";
     }
