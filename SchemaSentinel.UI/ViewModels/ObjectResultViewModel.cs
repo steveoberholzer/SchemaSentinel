@@ -34,10 +34,12 @@ public class ObjectResultViewModel : ViewModelBase
         : Result.SummaryMessage;
     public string? SourceDefinition => Result.SourceNormalizedDefinition;
     public string? TargetDefinition => Result.TargetNormalizedDefinition;
-    public bool HasDefinitions => SourceDefinition != null || TargetDefinition != null;
+    private string? DisplaySourceDefinition => Result.SourceRawDefinition ?? Result.SourceNormalizedDefinition;
+    private string? DisplayTargetDefinition => Result.TargetRawDefinition ?? Result.TargetNormalizedDefinition;
+    public bool HasDefinitions => DisplaySourceDefinition != null || DisplayTargetDefinition != null;
 
     private List<DiffLine>? _diffLines;
-    public List<DiffLine> DiffLines => _diffLines ??= DiffEngine.Compute(SourceDefinition, TargetDefinition);
+    public List<DiffLine> DiffLines => _diffLines ??= DiffEngine.Compute(DisplaySourceDefinition, DisplayTargetDefinition);
 
     public bool IsSelected { get => _isSelected; set => SetField(ref _isSelected, value); }
 }

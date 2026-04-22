@@ -54,6 +54,8 @@ public class TableNormalizer
         return sb.ToString();
     }
 
+    public string RenderRaw(TableModel table) => RenderDefinition(table, new ComparisonOptions());
+
     public static string FormatDataType(ColumnModel col) =>
         col.DataType.ToLowerInvariant() switch
         {

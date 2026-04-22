@@ -62,14 +62,18 @@ public class SchemaComparer
             {
                 var normTgtOnly = _tableNormalizer.Normalize(tgt!, options);
                 yield return Missing("Table", tgt!.SchemaName, tgt.TableName, DiffStatus.MissingInSource,
-                    tgt.ModifyDate, targetDef: _tableNormalizer.RenderDefinition(normTgtOnly, options));
+                    tgt.ModifyDate,
+                    targetDef: _tableNormalizer.RenderDefinition(normTgtOnly, options),
+                    targetRawDef: _tableNormalizer.RenderRaw(tgt));
                 continue;
             }
             if (!hasTarget)
             {
                 var normSrcOnly = _tableNormalizer.Normalize(src!, options);
                 yield return Missing("Table", src!.SchemaName, src.TableName, DiffStatus.MissingInTarget,
-                    src.ModifyDate, sourceDef: _tableNormalizer.RenderDefinition(normSrcOnly, options));
+                    src.ModifyDate,
+                    sourceDef: _tableNormalizer.RenderDefinition(normSrcOnly, options),
+                    sourceRawDef: _tableNormalizer.RenderRaw(src!));
                 continue;
             }
 
@@ -88,6 +92,8 @@ public class SchemaComparer
                 DetailedDifferences = diffs,
                 SourceNormalizedDefinition = _tableNormalizer.RenderDefinition(normSrc, options),
                 TargetNormalizedDefinition = _tableNormalizer.RenderDefinition(normTgt, options),
+                SourceRawDefinition = _tableNormalizer.RenderRaw(src!),
+                TargetRawDefinition = _tableNormalizer.RenderRaw(tgt!),
                 AlterScript = alterScript.Length > 0 ? alterScript : null,
                 SourceModifyDate = src.ModifyDate,
                 TargetModifyDate = tgt!.ModifyDate,
@@ -110,13 +116,17 @@ public class SchemaComparer
             if (!hasSource)
             {
                 yield return Missing(objectType, tgt!.SchemaName, tgt.ObjectName, DiffStatus.MissingInSource,
-                    tgt.ModifyDate, targetDef: _moduleNormalizer.Normalize(tgt.Definition, options));
+                    tgt.ModifyDate,
+                    targetDef: _moduleNormalizer.Normalize(tgt.Definition, options),
+                    targetRawDef: tgt.Definition);
                 continue;
             }
             if (!hasTarget)
             {
                 yield return Missing(objectType, src!.SchemaName, src.ObjectName, DiffStatus.MissingInTarget,
-                    src.ModifyDate, sourceDef: _moduleNormalizer.Normalize(src.Definition, options));
+                    src.ModifyDate,
+                    sourceDef: _moduleNormalizer.Normalize(src.Definition, options),
+                    sourceRawDef: src.Definition);
                 continue;
             }
 
@@ -136,6 +146,8 @@ public class SchemaComparer
                 SummaryMessage = isDifferent ? "Definition differs between source and target." : "Identical.",
                 SourceNormalizedDefinition = normSrcDef,
                 TargetNormalizedDefinition = normTgtDef,
+                SourceRawDefinition = src.Definition,
+                TargetRawDefinition = tgt.Definition,
                 SourceModifyDate = src.ModifyDate,
                 TargetModifyDate = tgt.ModifyDate,
             };
@@ -207,7 +219,9 @@ public class SchemaComparer
 
     private static ObjectComparisonResult Missing(
         string type, string schema, string name, DiffStatus status,
-        DateTime? modifyDate = null, string? sourceDef = null, string? targetDef = null) =>
+        DateTime? modifyDate = null,
+        string? sourceDef = null, string? targetDef = null,
+        string? sourceRawDef = null, string? targetRawDef = null) =>
         new()
         {
             ObjectType = type,
@@ -219,6 +233,8 @@ public class SchemaComparer
                 : $"{type} exists in source but not in target.",
             SourceNormalizedDefinition = sourceDef,
             TargetNormalizedDefinition = targetDef,
+            SourceRawDefinition = sourceRawDef,
+            TargetRawDefinition = targetRawDef,
             SourceModifyDate = status == DiffStatus.MissingInTarget ? modifyDate : null,
             TargetModifyDate = status == DiffStatus.MissingInSource ? modifyDate : null,
         };

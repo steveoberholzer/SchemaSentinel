@@ -10,6 +10,8 @@ public class ObjectComparisonResult
     public List<string> DetailedDifferences { get; set; } = new();
     public string? SourceNormalizedDefinition { get; set; }
     public string? TargetNormalizedDefinition { get; set; }
+    public string? SourceRawDefinition { get; set; }
+    public string? TargetRawDefinition { get; set; }
     public string? AlterScript { get; set; }
     public DateTime? SourceModifyDate { get; set; }
     public DateTime? TargetModifyDate { get; set; }
