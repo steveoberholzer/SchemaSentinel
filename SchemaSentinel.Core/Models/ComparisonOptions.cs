@@ -14,6 +14,8 @@ public class ComparisonOptions
     public bool IgnoreWhitespace { get; set; } = true;
     public bool IgnoreCasing { get; set; } = false;
     public bool IgnoreSetStatements { get; set; } = true;
+    public bool IgnoreComments { get; set; } = false;
+    public bool NormalizeBrackets { get; set; } = false;
     public DateTime? ChangedSince { get; set; }
     public List<string> SchemaFilter { get; set; } = new();
 }

@@ -1,9 +1,9 @@
 using System.Collections.ObjectModel;
 using System.Windows;
-using Microsoft.Win32;
 using SchemaSentinel.Core.Comparison;
 using SchemaSentinel.Data;
 using SchemaSentinel.Reporting;
+using SchemaSentinel.UI.Windows;
 
 namespace SchemaSentinel.UI.ViewModels;
 
@@ -234,19 +234,17 @@ public class MainViewModel : ViewModelBase
     {
         if (_lastSummary == null) return;
 
-        var dialog = new SaveFileDialog
-        {
-            Filter = $"{exporter.DisplayName}|*{exporter.FileExtension}",
-            FileName = $"SchemaSentinel-Report-{DateTime.Now:yyyyMMdd-HHmmss}{exporter.FileExtension}"
-        };
-
-        if (dialog.ShowDialog() != true) return;
-
         try
         {
-            StatusMessage = "Exporting...";
-            await exporter.ExportAsync(_lastSummary, dialog.FileName);
-            StatusMessage = $"Report exported: {dialog.FileName}";
+            StatusMessage = "Generating preview...";
+            var content = await exporter.GenerateAsync(_lastSummary);
+            StatusMessage = "Ready.";
+
+            var preview = new ExportPreviewWindow(exporter.DisplayName, exporter.FileExtension, content)
+            {
+                Owner = Application.Current.MainWindow
+            };
+            preview.ShowDialog();
         }
         catch (Exception ex)
         {

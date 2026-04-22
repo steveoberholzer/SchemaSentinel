@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using SchemaSentinel.Core.Comparison;
@@ -15,9 +16,12 @@ public class JsonReporter : IReportExporter
         Converters = { new JsonStringEnumConverter() }
     };
 
+    public Task<string> GenerateAsync(ComparisonSummary summary, CancellationToken cancellationToken = default)
+        => Task.FromResult(JsonSerializer.Serialize(summary, Options));
+
     public async Task ExportAsync(ComparisonSummary summary, string filePath, CancellationToken cancellationToken = default)
     {
-        await using var stream = File.Create(filePath);
-        await JsonSerializer.SerializeAsync(stream, summary, Options, cancellationToken);
+        var json = await GenerateAsync(summary, cancellationToken);
+        await File.WriteAllTextAsync(filePath, json, Encoding.UTF8, cancellationToken);
     }
 }

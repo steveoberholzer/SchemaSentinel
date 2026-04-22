@@ -8,9 +8,12 @@ public class MarkdownReporter : IReportExporter
     public string FileExtension => ".md";
     public string DisplayName => "Markdown Report";
 
+    public Task<string> GenerateAsync(ComparisonSummary summary, CancellationToken cancellationToken = default)
+        => Task.FromResult(BuildMarkdown(summary));
+
     public async Task ExportAsync(ComparisonSummary summary, string filePath, CancellationToken cancellationToken = default)
     {
-        var md = BuildMarkdown(summary);
+        var md = await GenerateAsync(summary, cancellationToken);
         await File.WriteAllTextAsync(filePath, md, Encoding.UTF8, cancellationToken);
     }
 

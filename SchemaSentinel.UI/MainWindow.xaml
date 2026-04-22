@@ -138,7 +138,9 @@
                                 <CheckBox Content="Sort columns A–Z" IsChecked="{Binding Options.SortColumnsAlphabetically}" Margin="0,0,10,2" FontSize="12"/>
                                 <CheckBox Content="Ignore whitespace" IsChecked="{Binding Options.IgnoreWhitespace}" Margin="0,0,10,2" FontSize="12"/>
                                 <CheckBox Content="Ignore casing" IsChecked="{Binding Options.IgnoreCasing}" Margin="0,0,10,2" FontSize="12"/>
-                                <CheckBox Content="Ignore SET statements" IsChecked="{Binding Options.IgnoreSetStatements}" Margin="0,0,0,2" FontSize="12"/>
+                                <CheckBox Content="Ignore SET statements" IsChecked="{Binding Options.IgnoreSetStatements}" Margin="0,0,10,2" FontSize="12"/>
+                                <CheckBox Content="Ignore comments" IsChecked="{Binding Options.IgnoreComments}" Margin="0,0,10,2" FontSize="12"/>
+                                <CheckBox Content="Normalize brackets" IsChecked="{Binding Options.NormalizeBrackets}" Margin="0,0,0,2" FontSize="12"/>
                             </WrapPanel>
                         </GroupBox>
 
@@ -312,10 +314,10 @@
                         </TextBlock.Style>
                     </TextBlock>
 
-                    <!-- Detail content (visible when something is selected) -->
-                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="14">
-                        <ScrollViewer.Style>
-                            <Style TargetType="ScrollViewer">
+                    <!-- Detail content: header+diffs (top) + side-by-side diff viewer (bottom) -->
+                    <Grid>
+                        <Grid.Style>
+                            <Style TargetType="Grid">
                                 <Setter Property="Visibility" Value="Visible"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding SelectedResult}" Value="{x:Null}">
@@ -323,56 +325,44 @@
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
-                        </ScrollViewer.Style>
-                        <StackPanel DataContext="{Binding SelectedResult}">
-                            <!-- Title -->
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                <TextBlock Text="{Binding ObjectType}" Foreground="#999" FontSize="11" VerticalAlignment="Bottom" Margin="0,0,6,0"/>
-                                <TextBlock Text="{Binding FullName}" FontSize="14" FontWeight="SemiBold" Foreground="#1A3A5C"/>
-                            </StackPanel>
+                        </Grid.Style>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
 
-                            <!-- Status badge -->
-                            <Border Background="{Binding Status, Converter={StaticResource StatusBg}}"
-                                    CornerRadius="4" Padding="8,4" Margin="0,0,0,10" HorizontalAlignment="Left">
-                                <TextBlock Text="{Binding StatusText}"
-                                           Foreground="{Binding Status, Converter={StaticResource StatusColor}}"
-                                           FontWeight="SemiBold" FontSize="12"/>
-                            </Border>
-
-                            <!-- Differences -->
-                            <TextBlock Text="Differences" Style="{StaticResource DetailSectionHeader}"/>
-                            <Border Background="#FAFAFA" BorderBrush="#EEE" BorderThickness="1"
-                                    CornerRadius="3" Padding="8" Margin="0,0,0,12">
-                                <TextBox Text="{Binding DifferencesText, Mode=OneWay}"
-                                         IsReadOnly="True" BorderThickness="0" Background="Transparent"
-                                         FontSize="11" FontFamily="Consolas" TextWrapping="Wrap"
-                                         VerticalScrollBarVisibility="Auto" MaxHeight="120"/>
-                            </Border>
-
-                            <!-- Definitions (tables + modules with changed definitions) -->
-                            <StackPanel Visibility="{Binding HasDefinitions, Converter={StaticResource BoolToVis}}">
-                                <TextBlock Text="Source Definition" Style="{StaticResource DetailSectionHeader}"/>
-                                <Border Background="#F4FBF6" BorderBrush="#A9DFBF" BorderThickness="1"
-                                        CornerRadius="3" Padding="8" Margin="0,0,0,10" MaxHeight="180">
-                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                                        <TextBox Text="{Binding SourceDefinition, Mode=OneWay}"
-                                                 IsReadOnly="True" BorderThickness="0" Background="Transparent"
-                                                 FontSize="11" FontFamily="Consolas" TextWrapping="NoWrap"/>
-                                    </ScrollViewer>
+                        <!-- Row 0: object header + status badge + differences summary -->
+                        <ScrollViewer Grid.Row="0" MaxHeight="190"
+                                      VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      Padding="14,14,14,6">
+                            <StackPanel DataContext="{Binding SelectedResult}">
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                    <TextBlock Text="{Binding ObjectType}" Foreground="#999" FontSize="11" VerticalAlignment="Bottom" Margin="0,0,6,0"/>
+                                    <TextBlock Text="{Binding FullName}" FontSize="14" FontWeight="SemiBold" Foreground="#1A3A5C" TextWrapping="Wrap"/>
+                                </StackPanel>
+                                <Border Background="{Binding Status, Converter={StaticResource StatusBg}}"
+                                        CornerRadius="4" Padding="8,4" Margin="0,0,0,8" HorizontalAlignment="Left">
+                                    <TextBlock Text="{Binding StatusText}"
+                                               Foreground="{Binding Status, Converter={StaticResource StatusColor}}"
+                                               FontWeight="SemiBold" FontSize="12"/>
                                 </Border>
-
-                                <TextBlock Text="Target Definition" Style="{StaticResource DetailSectionHeader}"/>
-                                <Border Background="#FEF9F9" BorderBrush="#F1948A" BorderThickness="1"
-                                        CornerRadius="3" Padding="8" MaxHeight="180">
-                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                                        <TextBox Text="{Binding TargetDefinition, Mode=OneWay}"
-                                                 IsReadOnly="True" BorderThickness="0" Background="Transparent"
-                                                 FontSize="11" FontFamily="Consolas" TextWrapping="NoWrap"/>
-                                    </ScrollViewer>
+                                <TextBlock Text="Differences" Style="{StaticResource DetailSectionHeader}"/>
+                                <Border Background="#FAFAFA" BorderBrush="#EEE" BorderThickness="1"
+                                        CornerRadius="3" Padding="8" Margin="0,0,0,4">
+                                    <TextBox Text="{Binding DifferencesText, Mode=OneWay}"
+                                             IsReadOnly="True" BorderThickness="0" Background="Transparent"
+                                             FontSize="11" FontFamily="Consolas" TextWrapping="Wrap"
+                                             VerticalScrollBarVisibility="Disabled"/>
                                 </Border>
                             </StackPanel>
-                        </StackPanel>
-                    </ScrollViewer>
+                        </ScrollViewer>
+
+                        <!-- Row 1: side-by-side diff viewer (fills remaining space) -->
+                        <ctrl:DiffViewerControl Grid.Row="1"
+                            DataContext="{Binding SelectedResult}"
+                            Visibility="{Binding SelectedResult.HasDefinitions, Converter={StaticResource BoolToVis}}"/>
+                    </Grid>
                 </Grid>
             </Border>
         </Grid>

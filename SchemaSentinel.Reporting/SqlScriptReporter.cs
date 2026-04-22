@@ -8,7 +8,13 @@ public class SqlScriptReporter : IReportExporter
     public string FileExtension => ".sql";
     public string DisplayName => "SQL Script";
 
+    public Task<string> GenerateAsync(ComparisonSummary summary, CancellationToken cancellationToken = default)
+        => Task.FromResult(BuildScript(summary));
+
     public Task ExportAsync(ComparisonSummary summary, string filePath, CancellationToken cancellationToken = default)
+        => File.WriteAllTextAsync(filePath, BuildScript(summary), Encoding.UTF8, cancellationToken);
+
+    private static string BuildScript(ComparisonSummary summary)
     {
         var sb = new StringBuilder();
         sb.AppendLine("-- ============================================================");
@@ -69,6 +75,6 @@ public class SqlScriptReporter : IReportExporter
             sb.AppendLine();
         }
 
-        return File.WriteAllTextAsync(filePath, sb.ToString(), Encoding.UTF8, cancellationToken);
+        return sb.ToString();
     }
 }

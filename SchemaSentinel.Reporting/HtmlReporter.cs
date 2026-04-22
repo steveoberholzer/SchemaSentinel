@@ -9,9 +9,12 @@ public class HtmlReporter : IReportExporter
     public string FileExtension => ".html";
     public string DisplayName => "HTML Report";
 
+    public Task<string> GenerateAsync(ComparisonSummary summary, CancellationToken cancellationToken = default)
+        => Task.FromResult(BuildHtml(summary));
+
     public async Task ExportAsync(ComparisonSummary summary, string filePath, CancellationToken cancellationToken = default)
     {
-        var html = BuildHtml(summary);
+        var html = await GenerateAsync(summary, cancellationToken);
         await File.WriteAllTextAsync(filePath, html, Encoding.UTF8, cancellationToken);
     }
 

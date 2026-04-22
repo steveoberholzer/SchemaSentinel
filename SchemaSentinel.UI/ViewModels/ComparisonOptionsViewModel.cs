@@ -14,6 +14,8 @@ public class ComparisonOptionsViewModel : ViewModelBase
     private bool _ignoreWhitespace = true;
     private bool _ignoreCasing = false;
     private bool _ignoreSetStatements = true;
+    private bool _ignoreComments = false;
+    private bool _normalizeBrackets = false;
     private DateTime? _changedSince;
     private bool _useChangedSince;
 
@@ -30,6 +32,8 @@ public class ComparisonOptionsViewModel : ViewModelBase
     public bool IgnoreWhitespace { get => _ignoreWhitespace; set => SetField(ref _ignoreWhitespace, value); }
     public bool IgnoreCasing { get => _ignoreCasing; set => SetField(ref _ignoreCasing, value); }
     public bool IgnoreSetStatements { get => _ignoreSetStatements; set => SetField(ref _ignoreSetStatements, value); }
+    public bool IgnoreComments { get => _ignoreComments; set => SetField(ref _ignoreComments, value); }
+    public bool NormalizeBrackets { get => _normalizeBrackets; set => SetField(ref _normalizeBrackets, value); }
     public DateTime? ChangedSince { get => _changedSince; set => SetField(ref _changedSince, value); }
     public bool UseChangedSince { get => _useChangedSince; set { SetField(ref _useChangedSince, value); if (!value) ChangedSince = null; } }
 
@@ -52,6 +56,8 @@ public class ComparisonOptionsViewModel : ViewModelBase
             opts.IgnoreWhitespace = IgnoreWhitespace;
             opts.IgnoreCasing = IgnoreCasing;
             opts.IgnoreSetStatements = IgnoreSetStatements;
+            opts.IgnoreComments = IgnoreComments;
+            opts.NormalizeBrackets = NormalizeBrackets;
         }
 
         return opts;

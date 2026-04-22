@@ -1,0 +1,113 @@
+<UserControl x:Class="SchemaSentinel.UI.Controls.DiffViewerControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:comp="clr-namespace:SchemaSentinel.Core.Comparison;assembly=SchemaSentinel.Core"
+             xmlns:conv="clr-namespace:SchemaSentinel.UI.Converters"
+             xmlns:ctrl="clr-namespace:SchemaSentinel.UI.Controls">
+
+    <UserControl.Resources>
+        <conv:DiffKindToLeftBackgroundConverter  x:Key="LeftBg"/>
+        <conv:DiffKindToRightBackgroundConverter x:Key="RightBg"/>
+
+        <Style x:Key="LineNoStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#999"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="TextAlignment" Value="Right"/>
+            <Setter Property="Padding" Value="0,1,4,1"/>
+            <Setter Property="Width" Value="36"/>
+        </Style>
+
+        <!-- Plain row (Same / Removed / Added) -->
+        <DataTemplate x:Key="PlainRowTemplate" DataType="{x:Type comp:DiffLine}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="36"/>
+                    <ColumnDefinition Width="800"/>
+                    <ColumnDefinition Width="1"/>
+                    <ColumnDefinition Width="36"/>
+                    <ColumnDefinition Width="800"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="{Binding LeftLineNo}"
+                           Style="{StaticResource LineNoStyle}"
+                           Background="{Binding Kind, Converter={StaticResource LeftBg}}"/>
+                <TextBlock Grid.Column="1" Text="{Binding LeftText}"
+                           Background="{Binding Kind, Converter={StaticResource LeftBg}}"
+                           Padding="4,1,4,1"/>
+                <Rectangle Grid.Column="2" Fill="#DDD"/>
+                <TextBlock Grid.Column="3" Text="{Binding RightLineNo}"
+                           Style="{StaticResource LineNoStyle}"
+                           Background="{Binding Kind, Converter={StaticResource RightBg}}"/>
+                <TextBlock Grid.Column="4" Text="{Binding RightText}"
+                           Background="{Binding Kind, Converter={StaticResource RightBg}}"
+                           Padding="4,1,4,1"/>
+            </Grid>
+        </DataTemplate>
+
+        <!-- Modified row — inline character highlights -->
+        <DataTemplate x:Key="ModifiedRowTemplate" DataType="{x:Type comp:DiffLine}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="36"/>
+                    <ColumnDefinition Width="800"/>
+                    <ColumnDefinition Width="1"/>
+                    <ColumnDefinition Width="36"/>
+                    <ColumnDefinition Width="800"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="{Binding LeftLineNo}"
+                           Style="{StaticResource LineNoStyle}"
+                           Background="#FFEEEE"/>
+                <TextBlock Grid.Column="1"
+                           ctrl:InlineTextHelper.LeftSegments="{Binding LeftSegments}"
+                           Background="#FFEEEE"
+                           Padding="4,1,4,1"/>
+                <Rectangle Grid.Column="2" Fill="#DDD"/>
+                <TextBlock Grid.Column="3" Text="{Binding RightLineNo}"
+                           Style="{StaticResource LineNoStyle}"
+                           Background="#EEFFEE"/>
+                <TextBlock Grid.Column="4"
+                           ctrl:InlineTextHelper.RightSegments="{Binding RightSegments}"
+                           Background="#EEFFEE"
+                           Padding="4,1,4,1"/>
+            </Grid>
+        </DataTemplate>
+
+        <ctrl:DiffLineTemplateSelector x:Key="RowSelector"
+            PlainTemplate="{StaticResource PlainRowTemplate}"
+            ModifiedTemplate="{StaticResource ModifiedRowTemplate}"/>
+    </UserControl.Resources>
+
+    <!-- Single ScrollViewer so header and rows scroll together horizontally -->
+    <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                  VerticalScrollBarVisibility="Auto">
+        <StackPanel MinWidth="1673">
+            <!-- Sticky-style header row -->
+            <Grid Background="#1A3A5C">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="36"/>
+                    <ColumnDefinition Width="800"/>
+                    <ColumnDefinition Width="1"/>
+                    <ColumnDefinition Width="36"/>
+                    <ColumnDefinition Width="800"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="1" Text="Source (normalized)"
+                           Foreground="White" FontSize="11" FontWeight="SemiBold"
+                           Padding="4,3"/>
+                <Rectangle Grid.Column="2" Fill="#4A6FA5"/>
+                <TextBlock Grid.Column="4" Text="Target (normalized)"
+                           Foreground="White" FontSize="11" FontWeight="SemiBold"
+                           Padding="4,3"/>
+            </Grid>
+
+            <!-- Diff rows — all rendered eagerly (no virtualization needed for SQL objects) -->
+            <ItemsControl ItemsSource="{Binding DiffLines}"
+                          ItemTemplateSelector="{StaticResource RowSelector}"
+                          FontFamily="Consolas" FontSize="11">
+                <ItemsControl.ItemContainerStyle>
+                    <Style TargetType="ContentPresenter">
+                        <Setter Property="HorizontalAlignment" Value="Left"/>
+                    </Style>
+                </ItemsControl.ItemContainerStyle>
+            </ItemsControl>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

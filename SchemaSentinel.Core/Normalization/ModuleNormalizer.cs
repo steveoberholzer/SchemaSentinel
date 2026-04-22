@@ -21,6 +21,21 @@ public class ModuleNormalizer
         @"[ \t]{2,}",
         RegexOptions.Compiled);
 
+    // Matches /* ... */ block comments (non-greedy, dotall)
+    private static readonly Regex BlockComments = new(
+        @"/\*.*?\*/",
+        RegexOptions.Singleline | RegexOptions.Compiled);
+
+    // Matches -- line comments to end of line
+    private static readonly Regex LineComments = new(
+        @"--[^\n]*",
+        RegexOptions.Compiled);
+
+    // Strips bracket-quoting from identifiers: [name] → name
+    private static readonly Regex BracketedIdentifier = new(
+        @"\[(\w+)\]",
+        RegexOptions.Compiled);
+
     public string Normalize(string definition, ComparisonOptions options)
     {
         if (string.IsNullOrWhiteSpace(definition))
@@ -30,6 +45,15 @@ public class ModuleNormalizer
 
         if (options.IgnoreSetStatements)
             result = SetStatementsPattern.Replace(result, string.Empty);
+
+        if (options.IgnoreComments)
+        {
+            result = BlockComments.Replace(result, string.Empty);
+            result = LineComments.Replace(result, string.Empty);
+        }
+
+        if (options.NormalizeBrackets)
+            result = BracketedIdentifier.Replace(result, "$1");
 
         if (options.IgnoreWhitespace)
         {

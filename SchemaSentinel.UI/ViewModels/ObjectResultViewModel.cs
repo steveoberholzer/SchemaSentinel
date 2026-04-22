@@ -2,6 +2,7 @@ using SchemaSentinel.Core.Comparison;
 
 namespace SchemaSentinel.UI.ViewModels;
 
+
 public class ObjectResultViewModel : ViewModelBase
 {
     private bool _isSelected;
@@ -34,6 +35,9 @@ public class ObjectResultViewModel : ViewModelBase
     public string? SourceDefinition => Result.SourceNormalizedDefinition;
     public string? TargetDefinition => Result.TargetNormalizedDefinition;
     public bool HasDefinitions => SourceDefinition != null || TargetDefinition != null;
+
+    private List<DiffLine>? _diffLines;
+    public List<DiffLine> DiffLines => _diffLines ??= DiffEngine.Compute(SourceDefinition, TargetDefinition);
 
     public bool IsSelected { get => _isSelected; set => SetField(ref _isSelected, value); }
 }
